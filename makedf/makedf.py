@@ -237,12 +237,18 @@ def make_mcdf(f, branches=mcbranches, primbranches=mcprimbranches):
 
     # particle counts w/ threshold
     for identifier, (particle, threshold) in TRUE_KE_THRESHOLDS.items():
-        this_KE = mcprimdf[np.abs(mcprimdf.pdg)==PDG[particle][0]].genE - PDG[particle][2]
+        if (particle == "electron") or (particle == "photon"):
+            this_KE = mcprimdf[np.abs(mcprimdf.pdg)==PDG[particle][0]].startE - mcprimdf[np.abs(mcprimdf.pdg)==PDG[particle][0]].endE
+        else:        
+            this_KE = mcprimdf[np.abs(mcprimdf.pdg)==PDG[particle][0]].genE - PDG[particle][2]
         mcdf = multicol_add(mcdf, ((np.abs(mcprimdf.pdg)==PDG[particle][0]) & (this_KE > threshold)).groupby(level=[0,1]).sum().rename(identifier))
- 
+    
     # lepton info
     mudf = mcprimdf[np.abs(mcprimdf.pdg)==13].sort_values(mcprimdf.index.names[:2] + [("genE", "")]).groupby(level=[0,1]).last()
     mudf.columns = pd.MultiIndex.from_tuples([tuple(["mu"] + list(c)) for c in mudf.columns])
+
+    edf = mcprimdf[np.abs(mcprimdf.pdg)==11].sort_values(mcprimdf.index.names[:2] + [("genE", "")]).groupby(level=[0,1]).last()
+    edf.columns = pd.MultiIndex.from_tuples([tuple(["e"] + list(c)) for c in edf.columns])
 
     cpidf = mcprimdf[np.abs(mcprimdf.pdg)==211].sort_values(mcprimdf.index.names[:2] + [("genE", "")]).groupby(level=[0,1]).last()
     cpidf.columns = pd.MultiIndex.from_tuples([tuple(["cpi"] + list(c)) for c in cpidf.columns])
@@ -251,6 +257,7 @@ def make_mcdf(f, branches=mcbranches, primbranches=mcprimbranches):
     pdf.columns = pd.MultiIndex.from_tuples([tuple(["p"] + list(c)) for c in pdf.columns])
 
     mcdf = multicol_merge(mcdf, mudf, left_index=True, right_index=True, how="left", validate="one_to_one")
+    mcdf = multicol_merge(mcdf, edf, left_index=True, right_index=True, how="left", validate="one_to_one")
     mcdf = multicol_merge(mcdf, cpidf, left_index=True, right_index=True, how="left", validate="one_to_one")
     mcdf = multicol_merge(mcdf, pdf, left_index=True, right_index=True, how="left", validate="one_to_one")
 

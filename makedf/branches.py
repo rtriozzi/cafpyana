@@ -286,6 +286,8 @@ mcbranches = [
 
 mcprimbranches = [
     "rec.mc.nu.prim.genE",
+    "rec.mc.nu.prim.startE",
+    "rec.mc.nu.prim.endE",
     "rec.mc.nu.prim.length",
     "rec.mc.nu.prim.pdg",
     "rec.mc.nu.prim.genp.x",

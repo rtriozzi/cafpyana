@@ -1,14 +1,14 @@
 #!/bin/bash 
 
 export machine=${HOSTNAME}
-if [[ $machine == *sbnd* || $machine == *jupyter* ]]; then
+if [[ $machine == *sbnd* ]]; then
   echo "working on a sbnd machine"
   source /cvmfs/larsoft.opensciencegrid.org/spack-v0.22.0-fermi/setup-env.sh
   export CAFPYANA_GRID_OUT_DIR="/pnfs/sbnd/scratch/users/$USER/cafpyana_out"
   mkdir -p $CAFPYANA_GRID_OUT_DIR
   htgettoken -a htvaultprod.fnal.gov -i sbnd
 fi
-if [[ $machine == *icarus* ]]; then
+if [[ $machine == *icarus* || $machine == *jupyter* ]]; then
   echo "working on a icarus machine"
   source /cvmfs/larsoft.opensciencegrid.org/spack-v0.22.0-fermi/setup-env.sh
   export CAFPYANA_GRID_OUT_DIR="/pnfs/icarus/scratch/users/$USER/cafpyana_out"

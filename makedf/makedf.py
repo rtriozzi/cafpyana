@@ -33,7 +33,8 @@ TRUE_KE_THRESHOLDS = {"nmu_27MeV": ["muon", 0.027],
                       "np_20MeV": ["proton", 0.02],
                       "np_50MeV": ["proton", 0.05],
                       "npi_30MeV": ["pipm", 0.03],
-                      "nn_0MeV": ["neutron", 0.0]
+                      "nn_0MeV": ["neutron", 0.0],
+                      "ne_200MeV": ["electron", 0.2]
                       }
 
 def make_hdrdf(f):
@@ -101,6 +102,10 @@ def make_crtspdf(f):
 
 def make_crthitdf(f):
     crthitdf = loadbranches(f["recTree"], crthitbranches).rec.crt_hits
+    return crthitdf
+
+def make_crtpmtmatchdf(f):
+    crthitdf = loadbranches(f["recTree"], crtpmtmatchbranches).rec.crtpmt_matches
     return crthitdf
 
 def make_opflashdf(f):
@@ -319,6 +324,41 @@ def make_pandora_df(f, trkScoreCut=False, trkDistCut=10., cutClearCosmic=False, 
     # require fiducial verex
     if requireFiducial:
         slcdf = slcdf[InFV(slcdf.slc.vertex, 50)]
+
+    # select showers with track score < 0.5
+    shwdf = trkdf[trkdf.pfp.trackScore < 0.5]
+
+    # e candidate is shower pfp with highest number of hits in the best plane
+    edf = shwdf.sort_values(
+        shwdf.pfp.index.names[:-1] + [("pfp", "shw", "plane", "I2", "nHits")]
+    ).groupby(level=[0, 1]).tail(1)
+    edf.columns = pd.MultiIndex.from_tuples([tuple(["electron_candidate"] + list(c)) for c in edf.columns])
+    slcdf = multicol_merge(slcdf, edf.droplevel(-1), left_index=True, right_index=True, how="left", validate="one_to_many")
+    idx_e = edf.index
+
+    '''
+    # select best-plane in terms of number of hits
+    nHits_I1 = shwdf[("pfp", "shw", "plane", "I1", "nHits")]
+    nHits_I2 = shwdf[("pfp", "shw", "plane", "I2", "nHits")]
+    shwdf[("pfp", "bestplane")] = np.where(
+        nHits_I2 >= nHits_I1,
+        "I2", 
+        "I1"
+    )
+    shwdf[("pfp", "bestplane_nHits")] = np.where(
+        shwdf[("pfp", "bestplane")] == "I2", 
+        nHits_I2, 
+        nHits_I1
+    )
+
+    # e candidate is shower pfp with highest number of hits in the best plane
+    edf = shwdf.sort_values(
+        shwdf.pfp.index.names[:-1] + [("pfp", "bestplane_nHits")]
+    ).groupby(level=[0, 1]).tail(1)
+    edf.columns = pd.MultiIndex.from_tuples([tuple(["electron_candidate"] + list(c)) for c in edf.columns])
+    slcdf = multicol_merge(slcdf, edf.droplevel(-1), left_index=True, right_index=True, how="left", validate="one_to_many")
+    idx_e = edf.index
+    '''
 
     #print(slcdf.pfp.trk.chi2pid.head(50))
     return slcdf

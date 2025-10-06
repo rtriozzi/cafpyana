@@ -138,7 +138,8 @@ def run_grid(inputfiles):
         out.write(cmd)
         out.close()
 
-    os.system('cp ./bin/grid_executable.sh %s' %MasterJobDir)
+    # os.system('cp ./bin/grid_executable.sh %s' %MasterJobDir)
+    os.system('cp ./bin/init_grid.sh %s/grid_executable.sh' %MasterJobDir)
 
     # 5) prepare a package for xrootd
     CAFPYANA_WD = os.environ['CAFPYANA_WD']
@@ -152,7 +153,7 @@ def run_grid(inputfiles):
     os.system(tar_cmd)
 
     submitCMD = '''jobsub_submit \\
--G sbnd \\
+-G icarus \\
 --auth-methods="token" \\
 -e LC_ALL=C \\
 --role=Analysis \\
